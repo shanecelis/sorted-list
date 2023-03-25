@@ -1,14 +1,23 @@
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![deny(unused_imports)]
-
+#![cfg_attr(not(feature = "std"), no_std)]
 //! Simple sorted list collection like the one found in the .NET collections library.
 
-use std::fmt;
+#[cfg(not(feature = "std"))]
+extern crate core as std;
+#[cfg(not(feature = "std"))]
+extern crate alloc;
 
-use std::ops::RangeBounds;
+#[cfg(feature = "std")]
+use std as core;
+#[cfg(feature = "std")]
+use std as alloc;
 
-use std::iter::FromIterator;
+use alloc::{fmt, vec::Vec};
+use core::ops::RangeBounds;
+
+use core::iter::FromIterator;
 
 /// `SortedList` stores multiple `(K, V)` tuples ordered by K, then in the order of insertion for `V`.
 /// Implmented using two `Vec` this should be fast for in-order inserts and quite bad in the
@@ -249,7 +258,7 @@ impl<K: Ord + PartialEq, V: PartialEq> SortedList<K, V> {
     where
         R: RangeBounds<K>,
     {
-        use std::ops::Bound::*;
+        use core::ops::Bound::*;
         let start = match range.start_bound() {
             Included(key) => self.find_first_position(key).either().into(),
             Excluded(key) => self.find_last_position(key).either().into(),
@@ -288,8 +297,8 @@ impl<K: Ord, V: PartialEq> IntoIterator for SortedList<K, V> {
 
 /// IntoIterator version of `Tuples`
 pub struct IntoTuples<K, V> {
-    keys: ::std::vec::IntoIter<K>,
-    values: ::std::vec::IntoIter<V>,
+    keys: ::alloc::vec::IntoIter<K>,
+    values: ::alloc::vec::IntoIter<V>,
 }
 
 impl<K, V> fmt::Debug for IntoTuples<K, V> {
@@ -445,6 +454,7 @@ impl<'a, K: Ord + fmt::Debug, V: PartialEq + fmt::Debug> fmt::Debug for Tuples<'
 
 impl<'a, K, V> ExactSizeIterator for Tuples<'a, K, V> {}
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod tests {
     use super::SortedList;
